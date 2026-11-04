@@ -152,7 +152,7 @@ export default function EstatisticasPage() {
                 width={130}
               />
               <Tooltip
-                formatter={(v: number) => [`${v}%`, 'Taxa de Acerto']}
+                formatter={(v) => [`${Number(v)}%`, 'Taxa de Acerto']}
                 contentStyle={{
                   fontSize: 12,
                   border: '1px solid #E2E8F0',
