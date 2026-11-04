@@ -35,6 +35,7 @@ export default function PraticarPage() {
       question={currentQuestion}
       questionNumber={session.currentIndex + 1}
       totalQuestions={session.questions.length}
+      sessionId={session.sessionId}
       onAnswer={(letter, time) => submitAnswer(currentQuestion, letter, time)}
       onNext={nextQuestion}
       onEnd={endSession}
