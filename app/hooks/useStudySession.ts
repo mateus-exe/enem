@@ -1,6 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+
 import {
   StudySession,
   Question,
@@ -41,7 +41,7 @@ export function useStudySession() {
           return;
         }
         setSession({
-          sessionId: uuidv4(),
+          sessionId: crypto.randomUUID(),
           examYear,
           dayFilter,
           disciplineFilter,
@@ -72,7 +72,7 @@ export function useStudySession() {
       const isCorrect = selectedLetter === correctLetter;
 
       const record: UserAnswerRecord = {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         sessionId: session.sessionId,
         questionKey: `${question.year}-${question.index}`,
         examYear: question.year,
@@ -97,7 +97,7 @@ export function useStudySession() {
 
   const nextQuestion = useCallback(() => {
     setSession((prev) => {
-      if (!prev) return null;
+      if (!prev || prev.currentIndex >= prev.questions.length - 1) return prev;
       return { ...prev, currentIndex: prev.currentIndex + 1 };
     });
   }, []);

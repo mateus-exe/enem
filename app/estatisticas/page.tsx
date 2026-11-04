@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   loadAnswers,
   filterAnswersByPeriod,
@@ -7,6 +7,7 @@ import {
 } from '@/app/services/storageService';
 import { UserAnswerRecord, StatsPeriod } from '@/app/types';
 import MetricCard from '@/app/components/MetricCard';
+import DataManager from '@/app/components/DataManager';
 import { disciplineLabel } from '@/app/services/enemApiService';
 import {
   BarChart,
@@ -43,40 +44,48 @@ const PERIODS: StatsPeriod[] = [
 export default function EstatisticasPage() {
   const [period, setPeriod] = useState<StatsPeriod>('week');
   const [answers, setAnswers] = useState<UserAnswerRecord[]>([]);
-  const [filtered, setFiltered] = useState<UserAnswerRecord[]>([]);
 
-  useEffect(() => {
+  const refreshAnswers = useCallback(() => {
     setAnswers(loadAnswers());
   }, []);
 
   useEffect(() => {
-    setFiltered(filterAnswersByPeriod(answers, period, null));
-  }, [answers, period]);
+    refreshAnswers();
+  }, [refreshAnswers]);
 
-  const stats = computeStats(filtered);
+  const filtered = useMemo(
+    () => filterAnswersByPeriod(answers, period, null),
+    [answers, period]
+  );
 
-  const disciplineData = Object.entries(stats.byDiscipline).map(([disc, data]) => ({
-    name: disciplineLabel[disc] ?? disc,
-    taxa: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
-    total: data.total,
-  }));
+  const stats = useMemo(() => computeStats(filtered), [filtered]);
 
-  // Histórico diário agrupado
-  const historyMap: Record<string, { total: number; correct: number }> = {};
-  for (const a of filtered) {
-    const day = a.answeredAt.slice(0, 10);
-    if (!historyMap[day]) historyMap[day] = { total: 0, correct: 0 };
-    historyMap[day].total++;
-    if (a.isCorrect) historyMap[day].correct++;
-  }
+  const disciplineData = useMemo(
+    () =>
+      Object.entries(stats.byDiscipline).map(([disc, data]) => ({
+        name: disciplineLabel[disc] ?? disc,
+        taxa: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
+        total: data.total,
+      })),
+    [stats.byDiscipline]
+  );
 
-  const historyData = Object.entries(historyMap)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, data]) => ({
-      date: date.slice(5), // MM-DD
-      questoes: data.total,
-      taxa: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
-    }));
+  const historyData = useMemo(() => {
+    const historyMap: Record<string, { total: number; correct: number }> = {};
+    for (const a of filtered) {
+      const day = a.answeredAt.slice(0, 10);
+      if (!historyMap[day]) historyMap[day] = { total: 0, correct: 0 };
+      historyMap[day].total++;
+      if (a.isCorrect) historyMap[day].correct++;
+    }
+    return Object.entries(historyMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, data]) => ({
+        date: date.slice(5), // MM-DD
+        questoes: data.total,
+        taxa: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
+      }));
+  }, [filtered]);
 
   const formatAvgTime = (secs: number) => {
     if (secs < 60) return `${secs}s`;
@@ -85,9 +94,12 @@ export default function EstatisticasPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
-      <div>
-        <h1 className="text-2xl font-semibold text-text-main mb-1">Estatísticas</h1>
-        <p className="text-sm text-text-meta">Acompanhe sua evolução por período.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-text-main mb-1">Estatísticas</h1>
+          <p className="text-sm text-text-meta">Acompanhe sua evolução por período.</p>
+        </div>
+        <DataManager onImportComplete={refreshAnswers} />
       </div>
 
       {/* Filtros de Período */}
@@ -124,7 +136,7 @@ export default function EstatisticasPage() {
 
       {/* Gráfico: Desempenho por Área */}
       {disciplineData.length > 0 && (
-        <div className="bg-white border border-border-soft rounded-xl p-6">
+        <div className="bg-bg-primary border border-border-soft rounded-xl p-6">
           <h2 className="text-sm font-semibold text-text-main mb-6">
             Desempenho por Área (Taxa de Acerto %)
           </h2>
@@ -167,7 +179,7 @@ export default function EstatisticasPage() {
 
       {/* Gráfico: Histórico de Evolução */}
       {historyData.length > 0 && (
-        <div className="bg-white border border-border-soft rounded-xl p-6">
+        <div className="bg-bg-primary border border-border-soft rounded-xl p-6">
           <h2 className="text-sm font-semibold text-text-main mb-6">
             Histórico de Evolução
           </h2>

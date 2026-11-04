@@ -115,7 +115,7 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
         <label className="block text-xs font-semibold text-text-meta uppercase tracking-widest">
           Dia da Prova
         </label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {dayOptions.map(({ value, label, sub }) => (
             <button
               key={String(value)}

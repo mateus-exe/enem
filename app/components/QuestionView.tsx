@@ -1,11 +1,16 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Clock, ChevronRight, XCircle, ZoomIn, X } from 'lucide-react';
+import { Clock, ChevronRight, XCircle, ZoomIn, X, Star } from 'lucide-react';
 import AlternativeButton from './AlternativeButton';
+import ProgressBar from './ProgressBar';
+import ConfirmDialog from './ConfirmDialog';
 import { Question, UserAnswerRecord } from '@/app/types';
 import { disciplineLabel } from '@/app/services/enemApiService';
+import { useTimer } from '@/app/hooks/useTimer';
+import { toggleFavorite, isFavorite } from '@/app/services/favoritesService';
+import { useEffect } from 'react';
 
 interface Props {
   question: Question;
@@ -31,43 +36,39 @@ export default function QuestionView({
   isLast,
 }: Props) {
   const [selected, setSelected] = useState<'A' | 'B' | 'C' | 'D' | 'E' | null>(null);
+  const eliminatedRef = useRef<Set<string>>(new Set());
   const [eliminated, setEliminated] = useState<Set<string>>(new Set());
   const [confirmed, setConfirmed] = useState(false);
   const [result, setResult] = useState<UserAnswerRecord | null>(null);
-  const [elapsed, setElapsed] = useState(0);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const questionKey = `${question.year}-${question.index}`;
+  const [favorited, setFavorited] = useState(() => isFavorite(questionKey));
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startTimeRef = useRef(Date.now());
+  const { elapsed, reset: resetTimer, stop: stopTimer, getElapsedSeconds } = useTimer();
 
   // Reset ao trocar de questão
   useEffect(() => {
     setSelected(null);
-    setEliminated(new Set());
+    const emptySet = new Set<string>();
+    eliminatedRef.current = emptySet;
+    setEliminated(emptySet);
     setConfirmed(false);
     setResult(null);
-    setElapsed(0);
-    startTimeRef.current = Date.now();
-
-    intervalRef.current = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
-    }, 1000);
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [question.index, question.year]);
+    setFavorited(isFavorite(`${question.year}-${question.index}`));
+    resetTimer();
+  }, [question.index, question.year, resetTimer]);
 
   const handleConfirm = useCallback(() => {
     if (!selected || confirmed) return;
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    stopTimer();
+    const timeSpent = getElapsedSeconds();
     const record = onAnswer(selected, timeSpent);
     setResult(record ?? null);
     setConfirmed(true);
-  }, [selected, confirmed, onAnswer]);
+  }, [selected, confirmed, onAnswer, stopTimer, getElapsedSeconds]);
 
-  // Atalhos de teclado
+  // Atalhos de teclado — usa ref para evitar stale closures em eliminated
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (confirmed) return;
@@ -75,12 +76,14 @@ export default function QuestionView({
         a: 'A', b: 'B', c: 'C', d: 'D', e: 'E',
         A: 'A', B: 'B', C: 'C', D: 'D', E: 'E',
       };
-      if (keyMap[e.key]) setSelected(keyMap[e.key]);
-      if (e.key === 'Enter') handleConfirm();
+      if (keyMap[e.key] && !eliminatedRef.current.has(keyMap[e.key])) {
+        setSelected(keyMap[e.key]);
+      }
+      if (e.key === 'Enter' && selected) handleConfirm();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [confirmed, handleConfirm]);
+  }, [confirmed, selected, handleConfirm]);
 
   const toggleEliminate = (letter: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -88,8 +91,14 @@ export default function QuestionView({
       const next = new Set(prev);
       if (next.has(letter)) next.delete(letter);
       else next.add(letter);
+      eliminatedRef.current = next;
       return next;
     });
+  };
+
+  const handleToggleFavorite = () => {
+    const isNowFav = toggleFavorite(questionKey, question.year, question.index, question.discipline);
+    setFavorited(isNowFav);
   };
 
   const formatTime = (secs: number) => {
@@ -108,6 +117,8 @@ export default function QuestionView({
 
   return (
     <div className="max-w-reading mx-auto px-6 py-10">
+      <ProgressBar current={questionNumber} total={totalQuestions} />
+
       {/* Cabeçalho técnico */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-meta font-medium">
@@ -121,9 +132,23 @@ export default function QuestionView({
             {questionNumber} / {totalQuestions}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-text-meta tabular-nums flex-shrink-0">
-          <Clock size={13} strokeWidth={1.5} />
-          {formatTime(elapsed)}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button
+            onClick={handleToggleFavorite}
+            aria-label={favorited ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+            aria-pressed={favorited}
+            className="p-1 rounded hover:bg-bg-secondary transition-colors"
+          >
+            <Star
+              size={16}
+              strokeWidth={1.5}
+              className={favorited ? 'text-yellow-500 fill-yellow-400' : 'text-text-meta'}
+            />
+          </button>
+          <div className="flex items-center gap-1.5 text-xs text-text-meta tabular-nums" aria-live="off" aria-label={`Tempo: ${formatTime(elapsed)}`}>
+            <Clock size={13} strokeWidth={1.5} />
+            {formatTime(elapsed)}
+          </div>
         </div>
       </div>
 
@@ -188,7 +213,11 @@ export default function QuestionView({
       )}
 
       {/* Alternativas */}
-      <div className="space-y-2.5 mb-8">
+      <div
+        className="space-y-2.5 mb-8"
+        role="radiogroup"
+        aria-label="Alternativas"
+      >
         {question.alternatives.map((alt) => (
           <AlternativeButton
             key={alt.letter}
@@ -213,6 +242,8 @@ export default function QuestionView({
       {/* Feedback de resposta */}
       {confirmed && result && (
         <div
+          role="alert"
+          aria-live="polite"
           className={`mb-6 rounded-lg px-4 py-3 text-sm border ${
             result.isCorrect
               ? 'bg-correct-bg border-correct-border text-correct-text'
@@ -237,7 +268,7 @@ export default function QuestionView({
               Confirmar Resposta
             </button>
             <button
-              onClick={onEnd}
+              onClick={() => setShowEndConfirm(true)}
               className="flex items-center gap-1.5 text-sm text-text-meta hover:text-text-main transition-colors"
             >
               <XCircle size={15} strokeWidth={1.5} />
@@ -267,10 +298,14 @@ export default function QuestionView({
         <div
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6"
           onClick={() => setLightboxSrc(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Ampliação de imagem"
         >
           <button
             className="absolute top-4 right-4 text-white/70 hover:text-white"
             onClick={() => setLightboxSrc(null)}
+            aria-label="Fechar ampliação"
           >
             <X size={24} strokeWidth={1.5} />
           </button>
@@ -282,6 +317,17 @@ export default function QuestionView({
           />
         </div>
       )}
+
+      {/* Confirmação de encerramento */}
+      <ConfirmDialog
+        open={showEndConfirm}
+        title="Encerrar sessão?"
+        message="Seu progresso atual será perdido. Tem certeza que deseja encerrar esta sessão?"
+        confirmLabel="Encerrar"
+        cancelLabel="Continuar estudando"
+        onConfirm={() => { setShowEndConfirm(false); onEnd(); }}
+        onCancel={() => setShowEndConfirm(false)}
+      />
     </div>
   );
 }

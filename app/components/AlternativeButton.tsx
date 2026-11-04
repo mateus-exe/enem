@@ -33,11 +33,11 @@ export default function AlternativeButton({
     if (confirmed) {
       if (isCorrect) return base + 'border-correct-border bg-correct-bg text-correct-text';
       if (selected) return base + 'border-wrong-border bg-wrong-bg text-wrong-text';
-      return base + 'border-border-soft bg-white text-text-meta opacity-60';
+      return base + 'border-border-soft bg-bg-primary text-text-meta opacity-60';
     }
     if (eliminated) return base + 'border-border-soft bg-bg-secondary text-text-meta opacity-50';
     if (selected) return base + 'border-action-main bg-bg-secondary text-text-main';
-    return base + 'border-border-soft bg-white text-text-main hover:border-action-main cursor-pointer';
+    return base + 'border-border-soft bg-bg-primary text-text-main hover:border-action-main cursor-pointer';
   };
 
   const getLetterClass = () => {
@@ -45,16 +45,20 @@ export default function AlternativeButton({
     if (confirmed && isCorrect) return base + 'border-correct-text bg-correct-text text-white';
     if (confirmed && selected) return base + 'border-wrong-text bg-wrong-text text-white';
     if (selected) return base + 'border-action-main bg-action-main text-white';
-    return base + 'border-border-soft bg-white text-text-meta';
+    return base + 'border-border-soft bg-bg-primary text-text-meta';
   };
 
   return (
     <button
+      role="radio"
+      aria-checked={selected}
+      aria-disabled={disabled}
+      aria-label={`Alternativa ${letter}${eliminated ? ' (riscada)' : ''}`}
       onClick={onSelect}
       disabled={disabled}
       className={getContainerClass()}
     >
-      <span className={getLetterClass()}>{letter}</span>
+      <span className={getLetterClass()} aria-hidden="true">{letter}</span>
 
       <div
         className="flex-1"
@@ -77,7 +81,9 @@ export default function AlternativeButton({
       {!confirmed && (
         <span
           onClick={onEliminate}
-          title="Riscar alternativa"
+          role="button"
+          aria-label={`${eliminated ? 'Desriscar' : 'Riscar'} alternativa ${letter}`}
+          title={eliminated ? 'Desriscar alternativa' : 'Riscar alternativa'}
           className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-bg-secondary"
         >
           <X size={14} strokeWidth={1.5} className="text-text-meta" />

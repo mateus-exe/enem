@@ -28,3 +28,19 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Dark mode override via class */
+html.dark {
+  --color-bg-primary: #0F172A;
+  --color-bg-secondary: #1E293B;
+  --color-border-soft: #334155;
+  --color-text-main: #F1F5F9;
+  --color-text-meta: #94A3B8;
+  --color-action-main: #E2E8F0;
+  --color-correct-text: #4ADE80;
+  --color-correct-bg: #052E16;
+  --color-correct-border: #166534;
+  --color-wrong-text: #FCA5A5;
+  --color-wrong-bg: #450A0A;
+  --color-wrong-border: #7F1D1D;
+}

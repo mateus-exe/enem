@@ -14,9 +14,13 @@ export function loadAnswers(): UserAnswerRecord[] {
 
 export function saveAnswer(record: UserAnswerRecord): void {
   if (typeof window === 'undefined') return;
-  const existing = loadAnswers();
-  existing.push(record);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+  try {
+    const existing = loadAnswers();
+    existing.push(record);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+  } catch (e) {
+    console.error('Erro ao salvar resposta no localStorage:', e);
+  }
 }
 
 export function clearAnswers(): void {
