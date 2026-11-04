@@ -93,9 +93,9 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
                 e.target.value === 'random' ? 'random' : Number(e.target.value)
               )
             }
-            className="w-full appearance-none bg-white border border-border-soft rounded-lg px-4 py-3 text-sm text-text-main pr-10 focus:outline-none focus:ring-2 focus:ring-action-main focus:border-transparent cursor-pointer"
+            className="w-full appearance-none bg-bg-primary border border-border-soft rounded-lg px-4 py-3 text-sm text-text-main pr-10 focus:outline-none focus:ring-2 focus:ring-action-main focus:border-transparent cursor-pointer"
           >
-            <option value="random">Anos Aleatórios</option>
+            <option value="random">Aleatório</option>
             {availableYears.map((y) => (
               <option key={y} value={y}>
                 ENEM {y}
@@ -122,15 +122,15 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
               onClick={() => setDayFilter(value)}
               className={`px-3 py-3 rounded-lg border text-sm font-medium text-left transition-colors ${
                 dayFilter === value
-                  ? 'border-action-main bg-action-main text-white'
-                  : 'border-border-soft bg-white text-text-main hover:border-action-main'
+                  ? 'border-action-main bg-action-main text-action-contrast'
+                  : 'border-border-soft bg-bg-primary text-text-main hover:border-action-main'
               }`}
             >
               <div>{label}</div>
               {sub && (
                 <div
                   className={`text-xs mt-0.5 ${
-                    dayFilter === value ? 'text-white/70' : 'text-text-meta'
+                    dayFilter === value ? 'text-action-contrast/70' : 'text-text-meta'
                   }`}
                 >
                   {sub}
@@ -153,8 +153,8 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
               onClick={() => setDisciplineFilter(value)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm font-medium transition-colors ${
                 disciplineFilter === value
-                  ? 'border-action-main bg-action-main text-white'
-                  : 'border-border-soft bg-white text-text-main hover:border-action-main'
+                  ? 'border-action-main bg-action-main text-action-contrast'
+                  : 'border-border-soft bg-bg-primary text-text-main hover:border-action-main'
               }`}
             >
               <Icon size={16} strokeWidth={1.5} />
@@ -180,14 +180,14 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
                 onClick={() => setLanguageFilter(value)}
                 className={`px-4 py-3 rounded-lg border text-sm font-medium text-left transition-colors ${
                   languageFilter === value
-                    ? 'border-action-main bg-action-main text-white'
-                    : 'border-border-soft bg-white text-text-main hover:border-action-main'
+                    ? 'border-action-main bg-action-main text-action-contrast'
+                    : 'border-border-soft bg-bg-primary text-text-main hover:border-action-main'
                 }`}
               >
                 <div>{label}</div>
                 <div
                   className={`text-xs mt-0.5 ${
-                    languageFilter === value ? 'text-white/70' : 'text-text-meta'
+                    languageFilter === value ? 'text-action-contrast/70' : 'text-text-meta'
                   }`}
                 >
                   {sub}
@@ -207,7 +207,7 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
       <button
         onClick={() => onStart(selectedYear, dayFilter, disciplineFilter, languageFilter)}
         disabled={loading}
-        className="w-full bg-action-main text-white py-3.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-action-main text-action-contrast py-3.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Carregando questões...' : 'Iniciar Sessão'}
       </button>

@@ -42,9 +42,9 @@ export default function AlternativeButton({
 
   const getLetterClass = () => {
     const base = 'flex-shrink-0 w-7 h-7 rounded flex items-center justify-center text-xs font-bold border ';
-    if (confirmed && isCorrect) return base + 'border-correct-text bg-correct-text text-white';
-    if (confirmed && selected) return base + 'border-wrong-text bg-wrong-text text-white';
-    if (selected) return base + 'border-action-main bg-action-main text-white';
+    if (confirmed && isCorrect) return base + 'border-correct-text bg-correct-text text-bg-primary';
+    if (confirmed && selected) return base + 'border-wrong-text bg-wrong-text text-bg-primary';
+    if (selected) return base + 'border-action-main bg-action-main text-action-contrast';
     return base + 'border-border-soft bg-bg-primary text-text-meta';
   };
 

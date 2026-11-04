@@ -188,15 +188,71 @@ export async function fetchQuestionsFiltered(
   return result;
 }
 
+// ---------------------------------------------------------------------------
+// Modo "Anos Aleatórios": mistura questões de vários anos respeitando a
+// distribuição oficial do ENEM (45 questões por área; em Linguagens são
+// 5 de língua estrangeira + 40 das demais).
+// ---------------------------------------------------------------------------
+const QUESTIONS_PER_AREA = 45;
+const FOREIGN_LANGUAGE_QUESTIONS = 5;
+const RANDOM_YEARS_SAMPLE = 6; // quantos anos sorteados entram no "pool"
+
+type Area = Question['discipline'];
+const AREA_ORDER: Area[] = ['linguagens', 'ciencias-humanas', 'ciencias-natureza', 'matematica'];
+
+function shuffle<T>(items: T[]): T[] {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function areasForFilters(dayFilter: DayFilter, disciplineFilter: DisciplineFilter): Area[] {
+  return AREA_ORDER.filter((area) => {
+    if (disciplineFilter !== 'all' && area !== disciplineFilter) return false;
+    if (dayFilter === 1) return area === 'linguagens' || area === 'ciencias-humanas';
+    if (dayFilter === 2) return area === 'ciencias-natureza' || area === 'matematica';
+    return true;
+  });
+}
+
 export async function fetchRandomYearQuestions(
   dayFilter: DayFilter,
   disciplineFilter: DisciplineFilter,
   languageFilter: LanguageFilter = 'ingles'
 ): Promise<Question[]> {
   const exams = await fetchExams();
-  const years = exams.map((e) => e.year);
-  const randomYear = years[Math.floor(Math.random() * years.length)];
-  return fetchQuestionsFiltered(randomYear, dayFilter, disciplineFilter, languageFilter);
+  const years = shuffle(exams.map((e) => e.year)).slice(0, RANDOM_YEARS_SAMPLE);
+
+  const results = await Promise.allSettled(years.map((y) => fetchAllQuestionsForYear(y)));
+  const pool: Question[] = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+
+  if (pool.length === 0) {
+    throw new Error('Não foi possível carregar questões dos anos sorteados.');
+  }
+
+  const selected: Question[] = [];
+
+  for (const area of areasForFilters(dayFilter, disciplineFilter)) {
+    const areaPool = pool.filter((q) => q.discipline === area);
+
+    if (area === 'linguagens') {
+      const foreign = areaPool.filter(
+        (q) => q.language && q.language.toLowerCase() === languageFilter.toLowerCase()
+      );
+      const others = areaPool.filter((q) => !q.language);
+      selected.push(
+        ...shuffle(others).slice(0, QUESTIONS_PER_AREA - FOREIGN_LANGUAGE_QUESTIONS),
+        ...shuffle(foreign).slice(0, FOREIGN_LANGUAGE_QUESTIONS)
+      );
+    } else {
+      selected.push(...shuffle(areaPool).slice(0, QUESTIONS_PER_AREA));
+    }
+  }
+
+  return selected;
 }
 
 export const disciplineLabel: Record<string, string> = {

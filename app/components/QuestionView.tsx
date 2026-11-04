@@ -263,7 +263,7 @@ export default function QuestionView({
             <button
               onClick={handleConfirm}
               disabled={!selected}
-              className="flex items-center gap-2 bg-action-main text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-action-main text-action-contrast px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Confirmar Resposta
             </button>
@@ -278,14 +278,14 @@ export default function QuestionView({
         ) : isLast ? (
           <button
             onClick={onEnd}
-            className="flex items-center gap-2 bg-action-main text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 bg-action-main text-action-contrast px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             Encerrar Sessão
           </button>
         ) : (
           <button
             onClick={onNext}
-            className="flex items-center gap-2 bg-action-main text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 bg-action-main text-action-contrast px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             Próxima Questão
             <ChevronRight size={16} strokeWidth={1.5} />

@@ -7,6 +7,7 @@
   --color-text-main: #0F172A;
   --color-text-meta: #64748B;
   --color-action-main: #1E293B;
+  --color-action-contrast: #FFFFFF;
   --color-correct-text: #15803D;
   --color-correct-bg: #F0FDF4;
   --color-correct-border: #BBF7D0;
@@ -37,6 +38,7 @@ html.dark {
   --color-text-main: #F1F5F9;
   --color-text-meta: #94A3B8;
   --color-action-main: #E2E8F0;
+  --color-action-contrast: #0F172A;
   --color-correct-text: #4ADE80;
   --color-correct-bg: #052E16;
   --color-correct-border: #166534;

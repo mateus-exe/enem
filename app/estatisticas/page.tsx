@@ -110,7 +110,7 @@ export default function EstatisticasPage() {
             onClick={() => setPeriod(p)}
             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               period === p
-                ? 'bg-action-main text-white'
+                ? 'bg-action-main text-action-contrast'
                 : 'bg-bg-secondary text-text-meta hover:text-text-main border border-border-soft'
             }`}
           >
@@ -144,13 +144,13 @@ export default function EstatisticasPage() {
             <BarChart layout="vertical" data={disciplineData} margin={{ left: 10 }}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#E2E8F0"
+                stroke='var(--color-border-soft)'
                 horizontal={false}
               />
               <XAxis
                 type="number"
                 domain={[0, 100]}
-                tick={{ fontSize: 11, fill: '#64748B' }}
+                tick={{ fontSize: 11, fill: 'var(--color-text-meta)' }}
                 tickLine={false}
                 axisLine={false}
                 unit="%"
@@ -158,7 +158,7 @@ export default function EstatisticasPage() {
               <YAxis
                 dataKey="name"
                 type="category"
-                tick={{ fontSize: 11, fill: '#64748B' }}
+                tick={{ fontSize: 11, fill: 'var(--color-text-meta)' }}
                 tickLine={false}
                 axisLine={false}
                 width={130}
@@ -167,11 +167,13 @@ export default function EstatisticasPage() {
                 formatter={(v) => [`${Number(v)}%`, 'Taxa de Acerto']}
                 contentStyle={{
                   fontSize: 12,
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid var(--color-border-soft)',
+                  background: 'var(--color-bg-primary)',
+                  color: 'var(--color-text-main)',
                   borderRadius: 8,
                 }}
               />
-              <Bar dataKey="taxa" fill="#1E293B" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="taxa" fill='var(--color-action-main)' radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -185,16 +187,16 @@ export default function EstatisticasPage() {
           </h2>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={historyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <CartesianGrid strokeDasharray="3 3" stroke='var(--color-border-soft)' />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fill: '#64748B' }}
+                tick={{ fontSize: 11, fill: 'var(--color-text-meta)' }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
                 yAxisId="left"
-                tick={{ fontSize: 11, fill: '#64748B' }}
+                tick={{ fontSize: 11, fill: 'var(--color-text-meta)' }}
                 tickLine={false}
                 axisLine={false}
               />
@@ -203,14 +205,16 @@ export default function EstatisticasPage() {
                 orientation="right"
                 domain={[0, 100]}
                 unit="%"
-                tick={{ fontSize: 11, fill: '#64748B' }}
+                tick={{ fontSize: 11, fill: 'var(--color-text-meta)' }}
                 tickLine={false}
                 axisLine={false}
               />
               <Tooltip
                 contentStyle={{
                   fontSize: 12,
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid var(--color-border-soft)',
+                  background: 'var(--color-bg-primary)',
+                  color: 'var(--color-text-main)',
                   borderRadius: 8,
                 }}
               />
@@ -218,7 +222,7 @@ export default function EstatisticasPage() {
                 yAxisId="left"
                 type="monotone"
                 dataKey="questoes"
-                stroke="#64748B"
+                stroke='var(--color-text-meta)'
                 strokeWidth={1.5}
                 dot={false}
                 name="Questões"
@@ -227,7 +231,7 @@ export default function EstatisticasPage() {
                 yAxisId="right"
                 type="monotone"
                 dataKey="taxa"
-                stroke="#1E293B"
+                stroke='var(--color-action-main)'
                 strokeWidth={2}
                 dot={false}
                 name="Taxa de Acerto %"
