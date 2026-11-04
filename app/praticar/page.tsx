@@ -2,6 +2,7 @@
 import { useStudySession } from '@/app/hooks/useStudySession';
 import PracticeMenu from '@/app/components/PracticeMenu';
 import QuestionView from '@/app/components/QuestionView';
+import { DayFilter, DisciplineFilter, LanguageFilter } from '@/app/types';
 
 export default function PraticarPage() {
   const {
@@ -17,7 +18,9 @@ export default function PraticarPage() {
   if (!session) {
     return (
       <PracticeMenu
-        onStart={startSession}
+        onStart={(year: number | 'random', day: DayFilter, discipline: DisciplineFilter, language: LanguageFilter) =>
+          startSession(year, day, discipline, language)
+        }
         loading={loading}
         error={error}
       />

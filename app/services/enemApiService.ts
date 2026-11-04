@@ -1,4 +1,4 @@
-import { Exam, Question, DisciplineFilter, DayFilter } from '@/app/types';
+import { Exam, Question, DisciplineFilter, DayFilter, LanguageFilter } from '@/app/types';
 
 const BASE_URL = 'https://api.enem.dev/v1';
 
@@ -52,7 +52,8 @@ export async function fetchAllQuestionsForYear(year: number): Promise<Question[]
 export async function fetchQuestionsFiltered(
   year: number,
   dayFilter: DayFilter,
-  disciplineFilter: DisciplineFilter
+  disciplineFilter: DisciplineFilter,
+  languageFilter: LanguageFilter = 'ingles'
 ): Promise<Question[]> {
   const all = await fetchAllQuestionsForYear(year);
 
@@ -72,17 +73,33 @@ export async function fetchQuestionsFiltered(
     result = result.filter((q) => q.discipline === disciplineFilter);
   }
 
+  // Filtra língua estrangeira: mantém questões sem language (PT, Literatura...)
+  // e questões da língua escolhida (ingles ou espanhol)
+  const includesLinguagens =
+    disciplineFilter === 'all' ||
+    disciplineFilter === 'linguagens' ||
+    dayFilter === 1;
+
+  if (includesLinguagens) {
+    result = result.filter(
+      (q) =>
+        !q.language ||
+        q.language.toLowerCase() === languageFilter.toLowerCase()
+    );
+  }
+
   return result;
 }
 
 export async function fetchRandomYearQuestions(
   dayFilter: DayFilter,
-  disciplineFilter: DisciplineFilter
+  disciplineFilter: DisciplineFilter,
+  languageFilter: LanguageFilter = 'ingles'
 ): Promise<Question[]> {
   const exams = await fetchExams();
   const years = exams.map((e) => e.year);
   const randomYear = years[Math.floor(Math.random() * years.length)];
-  return fetchQuestionsFiltered(randomYear, dayFilter, disciplineFilter);
+  return fetchQuestionsFiltered(randomYear, dayFilter, disciplineFilter, languageFilter);
 }
 
 export const disciplineLabel: Record<string, string> = {

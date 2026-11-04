@@ -100,6 +100,12 @@ export default function QuestionView({
 
   const correctAlt = question.alternatives.find((a) => a.isCorrect);
 
+  // Evita duplicação: remove de `files` as URLs já embutidas no markdown do `context`
+  const contextText = question.context ?? '';
+  const uniqueFiles = (question.files ?? []).filter(
+    (src) => !contextText.includes(src)
+  );
+
   return (
     <div className="max-w-reading mx-auto px-6 py-10">
       {/* Cabeçalho técnico */}
@@ -149,10 +155,10 @@ export default function QuestionView({
         </div>
       )}
 
-      {/* Imagens da questão */}
-      {question.files && question.files.length > 0 && (
+      {/* Imagens da questão — apenas as não embutidas no context */}
+      {uniqueFiles.length > 0 && (
         <div className="mb-6 flex flex-col gap-3">
-          {question.files.map((src, i) => (
+          {uniqueFiles.map((src, i) => (
             <div
               key={i}
               className="relative group cursor-zoom-in"

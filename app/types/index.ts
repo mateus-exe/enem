@@ -59,11 +59,14 @@ export type DisciplineFilter =
 
 export type DayFilter = 'all' | 1 | 2;
 
+export type LanguageFilter = 'ingles' | 'espanhol';
+
 export interface StudySession {
   sessionId: string;
   examYear: number | 'random';
   dayFilter: DayFilter;
   disciplineFilter: DisciplineFilter;
+  languageFilter: LanguageFilter;
   questions: Question[];
   currentIndex: number;
   startedAt: string;

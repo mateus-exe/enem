@@ -7,6 +7,7 @@ import {
   UserAnswerRecord,
   DayFilter,
   DisciplineFilter,
+  LanguageFilter,
 } from '@/app/types';
 import {
   fetchQuestionsFiltered,
@@ -23,16 +24,17 @@ export function useStudySession() {
     async (
       examYear: number | 'random',
       dayFilter: DayFilter,
-      disciplineFilter: DisciplineFilter
+      disciplineFilter: DisciplineFilter,
+      languageFilter: LanguageFilter
     ) => {
       setLoading(true);
       setError(null);
       try {
         let questions: Question[];
         if (examYear === 'random') {
-          questions = await fetchRandomYearQuestions(dayFilter, disciplineFilter);
+          questions = await fetchRandomYearQuestions(dayFilter, disciplineFilter, languageFilter);
         } else {
-          questions = await fetchQuestionsFiltered(examYear, dayFilter, disciplineFilter);
+          questions = await fetchQuestionsFiltered(examYear, dayFilter, disciplineFilter, languageFilter);
         }
         if (questions.length === 0) {
           setError('Nenhuma questão encontrada para os filtros selecionados.');
@@ -43,6 +45,7 @@ export function useStudySession() {
           examYear,
           dayFilter,
           disciplineFilter,
+          languageFilter,
           questions,
           currentIndex: 0,
           startedAt: new Date().toISOString(),

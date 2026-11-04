@@ -9,10 +9,15 @@ import {
   Globe,
 } from 'lucide-react';
 import { fetchExams } from '@/app/services/enemApiService';
-import { DayFilter, DisciplineFilter } from '@/app/types';
+import { DayFilter, DisciplineFilter, LanguageFilter } from '@/app/types';
 
 interface Props {
-  onStart: (year: number | 'random', day: DayFilter, discipline: DisciplineFilter) => void;
+  onStart: (
+    year: number | 'random',
+    day: DayFilter,
+    discipline: DisciplineFilter,
+    language: LanguageFilter
+  ) => void;
   loading: boolean;
   error: string | null;
 }
@@ -35,11 +40,27 @@ const dayOptions: { value: DayFilter; label: string; sub: string }[] = [
   { value: 2, label: '2º Dia', sub: 'Natureza e Matemática' },
 ];
 
+const languageOptions: { value: LanguageFilter; label: string; sub: string }[] = [
+  { value: 'ingles', label: 'Inglês', sub: 'Língua estrangeira' },
+  { value: 'espanhol', label: 'Espanhol', sub: 'Língua estrangeira' },
+];
+
+/** Retorna true se a seleção atual inclui questões de Linguagens */
+function includesLinguagens(day: DayFilter, discipline: DisciplineFilter): boolean {
+  if (discipline === 'linguagens') return true;
+  if (discipline === 'all') return true;
+  if (day === 1) return true;
+  return false;
+}
+
 export default function PracticeMenu({ onStart, loading, error }: Props) {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number | 'random'>('random');
   const [dayFilter, setDayFilter] = useState<DayFilter>('all');
   const [disciplineFilter, setDisciplineFilter] = useState<DisciplineFilter>('all');
+  const [languageFilter, setLanguageFilter] = useState<LanguageFilter>('ingles');
+
+  const showLanguageSelector = includesLinguagens(dayFilter, disciplineFilter);
 
   useEffect(() => {
     fetchExams()
@@ -108,7 +129,9 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
               <div>{label}</div>
               {sub && (
                 <div
-                  className={`text-xs mt-0.5 ${dayFilter === value ? 'text-white/70' : 'text-text-meta'}`}
+                  className={`text-xs mt-0.5 ${
+                    dayFilter === value ? 'text-white/70' : 'text-text-meta'
+                  }`}
                 >
                   {sub}
                 </div>
@@ -141,6 +164,40 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
         </div>
       </div>
 
+      {/* Seletor de Língua Estrangeira — aparece quando Linguagens está incluída */}
+      {showLanguageSelector && (
+        <div className="space-y-3">
+          <label className="block text-xs font-semibold text-text-meta uppercase tracking-widest">
+            Língua Estrangeira
+          </label>
+          <p className="text-xs text-text-meta -mt-1">
+            Escolha o idioma das questões de língua estrangeira da prova.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {languageOptions.map(({ value, label, sub }) => (
+              <button
+                key={value}
+                onClick={() => setLanguageFilter(value)}
+                className={`px-4 py-3 rounded-lg border text-sm font-medium text-left transition-colors ${
+                  languageFilter === value
+                    ? 'border-action-main bg-action-main text-white'
+                    : 'border-border-soft bg-white text-text-main hover:border-action-main'
+                }`}
+              >
+                <div>{label}</div>
+                <div
+                  className={`text-xs mt-0.5 ${
+                    languageFilter === value ? 'text-white/70' : 'text-text-meta'
+                  }`}
+                >
+                  {sub}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="bg-wrong-bg border border-wrong-border text-wrong-text rounded-lg px-4 py-3 text-sm">
           {error}
@@ -148,7 +205,7 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
       )}
 
       <button
-        onClick={() => onStart(selectedYear, dayFilter, disciplineFilter)}
+        onClick={() => onStart(selectedYear, dayFilter, disciplineFilter, languageFilter)}
         disabled={loading}
         className="w-full bg-action-main text-white py-3.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
