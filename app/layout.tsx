@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import Header from '@/app/components/Header';
+import { AuthProvider } from '@/app/lib/authContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,8 +28,10 @@ export default function RootLayout({
     <html lang="pt-BR">
       <Script id="theme-init" strategy="beforeInteractive">{themeScript}</Script>
       <body className={`${inter.className} bg-bg-secondary min-h-screen`}>
-        <Header />
-        <main className="pt-14">{children}</main>
+        <AuthProvider>
+          <Header />
+          <main className="pt-14">{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );

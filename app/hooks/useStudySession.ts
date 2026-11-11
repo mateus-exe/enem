@@ -15,7 +15,9 @@ import {
   fetchAllQuestionsForYear,
 } from '@/app/services/enemApiService';
 import { saveAnswer } from '@/app/services/storageService';
+import { saveRemoteAnswer } from '@/app/services/remoteStorageService';
 import { loadFavorites } from '@/app/services/favoritesService';
+import { supabase } from '@/app/lib/supabase';
 
 export function useStudySession() {
   const [session, setSession] = useState<StudySession | null>(null);
@@ -147,10 +149,20 @@ export function useStudySession() {
       };
 
       sessionRecordsRef.current.push(record);
-      const result = saveAnswer(record);
-      if (!result.ok && result.error === 'quota') {
+
+      // Salva localmente (sempre, como fallback)
+      const localResult = saveAnswer(record);
+      if (!localResult.ok && localResult.error === 'quota') {
         setError('Armazenamento cheio. Exporte seus dados e limpe o histórico nas Estatísticas.');
       }
+
+      // Salva remotamente se houver usuário autenticado (fire-and-forget)
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user) {
+          saveRemoteAnswer(record, data.user.id).catch(console.error);
+        }
+      });
+
       return record;
     },
     [session]

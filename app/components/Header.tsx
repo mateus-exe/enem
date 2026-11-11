@@ -2,8 +2,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, BarChart2, Moon, Sun, Star } from 'lucide-react';
+import { BookOpen, BarChart2, Moon, Sun, Star, LogIn } from 'lucide-react';
 import { favoritesChangedEvent, loadFavorites } from '@/app/services/favoritesService';
+import { useAuth } from '@/app/lib/authContext';
+import AuthModal from '@/app/components/AuthModal';
+import UserMenu from '@/app/components/UserMenu';
 
 const tabs = [
   { href: '/praticar', label: 'Praticar', icon: BookOpen },
@@ -41,6 +44,8 @@ function useTheme() {
 export default function Header() {
   const pathname = usePathname();
   const { dark, toggle } = useTheme();
+  const { user, loading: authLoading } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [favoriteCount, setFavoriteCount] = useState(0);
 
   const refreshFavoriteCount = useCallback(() => {
@@ -97,8 +102,26 @@ export default function Header() {
           >
             {dark ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
           </button>
+
+          {/* Auth: botão de login ou menu do usuário */}
+          {!authLoading && (
+            user
+              ? <UserMenu />
+              : (
+                <button
+                  onClick={() => setAuthModalOpen(true)}
+                  className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-text-meta hover:text-text-main hover:bg-bg-secondary transition-colors"
+                  aria-label="Entrar na conta"
+                >
+                  <LogIn size={15} strokeWidth={1.5} />
+                  <span className="hidden sm:inline">Entrar</span>
+                </button>
+              )
+          )}
         </div>
       </div>
+
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </header>
   );
 }
