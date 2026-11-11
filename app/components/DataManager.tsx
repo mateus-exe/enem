@@ -1,10 +1,8 @@
 'use client';
 import { useState, useRef } from 'react';
 import { Download, Upload } from 'lucide-react';
-import { loadAnswers, clearAnswers } from '@/app/services/storageService';
+import { loadAnswers, STORAGE_KEY } from '@/app/services/storageService';
 import { UserAnswerRecord } from '@/app/types';
-
-const STORAGE_KEY = 'enem_answers_v1';
 
 interface Props {
   onImportComplete?: () => void;

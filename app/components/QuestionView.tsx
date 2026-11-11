@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Clock, ChevronRight, XCircle, ZoomIn, X, Star } from 'lucide-react';
@@ -10,7 +10,6 @@ import { Question, UserAnswerRecord } from '@/app/types';
 import { disciplineLabel } from '@/app/services/enemApiService';
 import { useTimer } from '@/app/hooks/useTimer';
 import { toggleFavorite, isFavorite } from '@/app/services/favoritesService';
-import { useEffect } from 'react';
 
 interface Props {
   question: Question;
@@ -24,6 +23,7 @@ interface Props {
   onNext: () => void;
   onEnd: () => void;
   isLast: boolean;
+  sessionError?: string | null;
 }
 
 export default function QuestionView({
@@ -34,8 +34,10 @@ export default function QuestionView({
   onNext,
   onEnd,
   isLast,
+  sessionError,
 }: Props) {
   const [selected, setSelected] = useState<'A' | 'B' | 'C' | 'D' | 'E' | null>(null);
+  const selectedRef = useRef<'A' | 'B' | 'C' | 'D' | 'E' | null>(null);
   const eliminatedRef = useRef<Set<string>>(new Set());
   const [eliminated, setEliminated] = useState<Set<string>>(new Set());
   const [confirmed, setConfirmed] = useState(false);
@@ -47,9 +49,16 @@ export default function QuestionView({
 
   const { elapsed, reset: resetTimer, stop: stopTimer, getElapsedSeconds } = useTimer();
 
+  const chooseAnswer = useCallback((letter: 'A' | 'B' | 'C' | 'D' | 'E' | null) => {
+    selectedRef.current = letter;
+    setSelected(letter);
+  }, []);
+
   // Reset ao trocar de questão
   useEffect(() => {
-    setSelected(null);
+    // Sincroniza o estado local quando a questão muda.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    chooseAnswer(null);
     const emptySet = new Set<string>();
     eliminatedRef.current = emptySet;
     setEliminated(emptySet);
@@ -57,16 +66,17 @@ export default function QuestionView({
     setResult(null);
     setFavorited(isFavorite(`${question.year}-${question.index}`));
     resetTimer();
-  }, [question.index, question.year, resetTimer]);
+  }, [question.index, question.year, resetTimer, chooseAnswer]);
 
   const handleConfirm = useCallback(() => {
-    if (!selected || confirmed) return;
+    const answer = selectedRef.current;
+    if (!answer || confirmed) return;
     stopTimer();
     const timeSpent = getElapsedSeconds();
-    const record = onAnswer(selected, timeSpent);
+    const record = onAnswer(answer, timeSpent);
     setResult(record ?? null);
     setConfirmed(true);
-  }, [selected, confirmed, onAnswer, stopTimer, getElapsedSeconds]);
+  }, [confirmed, onAnswer, stopTimer, getElapsedSeconds]);
 
   // Atalhos de teclado — usa ref para evitar stale closures em eliminated
   useEffect(() => {
@@ -77,13 +87,13 @@ export default function QuestionView({
         A: 'A', B: 'B', C: 'C', D: 'D', E: 'E',
       };
       if (keyMap[e.key] && !eliminatedRef.current.has(keyMap[e.key])) {
-        setSelected(keyMap[e.key]);
+        chooseAnswer(keyMap[e.key]);
       }
-      if (e.key === 'Enter' && selected) handleConfirm();
+      if (e.key === 'Enter' && selectedRef.current) handleConfirm();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [confirmed, selected, handleConfirm]);
+  }, [confirmed, handleConfirm, chooseAnswer]);
 
   const toggleEliminate = (letter: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -231,7 +241,7 @@ export default function QuestionView({
             disabled={confirmed}
             onSelect={() => {
               if (!eliminated.has(alt.letter) && !confirmed) {
-                setSelected(alt.letter);
+                chooseAnswer(alt.letter);
               }
             }}
             onEliminate={(e) => toggleEliminate(alt.letter, e)}
@@ -240,6 +250,12 @@ export default function QuestionView({
       </div>
 
       {/* Feedback de resposta */}
+      {sessionError && (
+        <div role="alert" className="mb-6 rounded-lg px-4 py-3 text-sm border bg-wrong-bg border-wrong-border text-wrong-text">
+          {sessionError}
+        </div>
+      )}
+
       {confirmed && result && (
         <div
           role="alert"
@@ -322,7 +338,7 @@ export default function QuestionView({
       <ConfirmDialog
         open={showEndConfirm}
         title="Encerrar sessão?"
-        message="Seu progresso atual será perdido. Tem certeza que deseja encerrar esta sessão?"
+        message="Você poderá ver o resumo das respostas que já enviou nesta sessão. Deseja encerrar agora?"
         confirmLabel="Encerrar"
         cancelLabel="Continuar estudando"
         onConfirm={() => { setShowEndConfirm(false); onEnd(); }}

@@ -5,7 +5,7 @@ import {
   filterAnswersByPeriod,
   computeStats,
 } from '@/app/services/storageService';
-import { UserAnswerRecord, StatsPeriod } from '@/app/types';
+import { UserAnswerRecord, StatsPeriod, DisciplineFilter } from '@/app/types';
 import MetricCard from '@/app/components/MetricCard';
 import DataManager from '@/app/components/DataManager';
 import { disciplineLabel } from '@/app/services/enemApiService';
@@ -22,7 +22,6 @@ import {
 } from 'recharts';
 
 const PERIOD_LABELS: Record<StatsPeriod, string> = {
-  session: 'Sessão Atual',
   day: 'Dia',
   week: 'Semana',
   month: 'Mês',
@@ -32,7 +31,6 @@ const PERIOD_LABELS: Record<StatsPeriod, string> = {
 };
 
 const PERIODS: StatsPeriod[] = [
-  'session',
   'day',
   'week',
   'month',
@@ -41,22 +39,35 @@ const PERIODS: StatsPeriod[] = [
   'year',
 ];
 
+const DISCIPLINE_OPTIONS: { value: DisciplineFilter; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'ciencias-humanas', label: 'C. Humanas' },
+  { value: 'linguagens', label: 'Linguagens' },
+  { value: 'ciencias-natureza', label: 'C. Natureza' },
+  { value: 'matematica', label: 'Matemática' },
+];
+
 export default function EstatisticasPage() {
   const [period, setPeriod] = useState<StatsPeriod>('week');
   const [answers, setAnswers] = useState<UserAnswerRecord[]>([]);
+  const [disciplineFilter, setDisciplineFilter] = useState<DisciplineFilter>('all');
 
   const refreshAnswers = useCallback(() => {
     setAnswers(loadAnswers());
   }, []);
 
   useEffect(() => {
+    // Lê o snapshot do armazenamento local ao montar a página.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshAnswers();
   }, [refreshAnswers]);
 
-  const filtered = useMemo(
-    () => filterAnswersByPeriod(answers, period, null),
-    [answers, period]
-  );
+  const filtered = useMemo(() => {
+    const periodAnswers = filterAnswersByPeriod(answers, period);
+    return disciplineFilter === 'all'
+      ? periodAnswers
+      : periodAnswers.filter((answer) => answer.discipline === disciplineFilter);
+  }, [answers, period, disciplineFilter]);
 
   const stats = useMemo(() => computeStats(filtered), [filtered]);
 
@@ -103,11 +114,12 @@ export default function EstatisticasPage() {
       </div>
 
       {/* Filtros de Período */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2" aria-label="Filtrar por período">
         {PERIODS.map((p) => (
           <button
             key={p}
             onClick={() => setPeriod(p)}
+            aria-pressed={period === p}
             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               period === p
                 ? 'bg-action-main text-action-contrast'
@@ -115,6 +127,20 @@ export default function EstatisticasPage() {
             }`}
           >
             {PERIOD_LABELS[p]}
+          </button>
+        ))}
+      </div>
+
+      {/* Filtro de Disciplina */}
+      <div className="flex flex-wrap gap-2" aria-label="Filtrar por disciplina">
+        {DISCIPLINE_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => setDisciplineFilter(option.value)}
+            aria-pressed={disciplineFilter === option.value}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${disciplineFilter === option.value ? 'bg-action-main text-action-contrast' : 'bg-bg-secondary text-text-meta hover:text-text-main border border-border-soft'}`}
+          >
+            {option.label}
           </button>
         ))}
       </div>
@@ -164,13 +190,16 @@ export default function EstatisticasPage() {
                 width={130}
               />
               <Tooltip
-                formatter={(v) => [`${Number(v)}%`, 'Taxa de Acerto']}
-                contentStyle={{
-                  fontSize: 12,
-                  border: '1px solid var(--color-border-soft)',
-                  background: 'var(--color-bg-primary)',
-                  color: 'var(--color-text-main)',
-                  borderRadius: 8,
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const item = payload[0].payload as { name: string; taxa: number; total: number };
+                  return (
+                    <div style={{ fontSize: 12, border: '1px solid var(--color-border-soft)', background: 'var(--color-bg-primary)', color: 'var(--color-text-main)', borderRadius: 8, padding: '8px 12px' }}>
+                      <p style={{ fontWeight: 600, marginBottom: 4 }}>{item.name}</p>
+                      <p>Taxa de acerto: <strong>{item.taxa}%</strong></p>
+                      <p style={{ color: 'var(--color-text-meta)' }}>Total respondidas: {item.total}</p>
+                    </div>
+                  );
                 }}
               />
               <Bar dataKey="taxa" fill='var(--color-action-main)' radius={[0, 4, 4, 0]} />

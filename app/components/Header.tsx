@@ -1,11 +1,13 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, BarChart2, Moon, Sun } from 'lucide-react';
+import { BookOpen, BarChart2, Moon, Sun, Star } from 'lucide-react';
+import { favoritesChangedEvent, loadFavorites } from '@/app/services/favoritesService';
 
 const tabs = [
   { href: '/praticar', label: 'Praticar', icon: BookOpen },
+  { href: '/favoritos', label: 'Favoritos', icon: Star },
   { href: '/estatisticas', label: 'Estatísticas', icon: BarChart2 },
 ];
 
@@ -16,6 +18,8 @@ function useTheme() {
     const stored = localStorage.getItem('enem_theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const isDark = stored ? stored === 'dark' : prefersDark;
+    // Sincroniza o estado com a preferência persistida uma vez na montagem.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDark(isDark);
     document.documentElement.classList.toggle('dark', isDark);
   }, []);
@@ -24,7 +28,11 @@ function useTheme() {
     const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('enem_theme', next ? 'dark' : 'light');
+    try {
+      localStorage.setItem('enem_theme', next ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Não foi possível salvar a preferência de tema:', error);
+    }
   };
 
   return { dark, toggle };
@@ -33,6 +41,23 @@ function useTheme() {
 export default function Header() {
   const pathname = usePathname();
   const { dark, toggle } = useTheme();
+  const [favoriteCount, setFavoriteCount] = useState(0);
+
+  const refreshFavoriteCount = useCallback(() => {
+    setFavoriteCount(loadFavorites().length);
+  }, []);
+
+  useEffect(() => {
+    // Carrega o snapshot inicial do localStorage e mantém a contagem sincronizada.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refreshFavoriteCount();
+    window.addEventListener(favoritesChangedEvent, refreshFavoriteCount);
+    window.addEventListener('storage', refreshFavoriteCount);
+    return () => {
+      window.removeEventListener(favoritesChangedEvent, refreshFavoriteCount);
+      window.removeEventListener('storage', refreshFavoriteCount);
+    };
+  }, [refreshFavoriteCount]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-bg-primary border-b border-border-soft h-14">
@@ -56,6 +81,11 @@ export default function Header() {
                 >
                   <Icon size={15} strokeWidth={1.5} />
                   <span className="hidden sm:inline">{label}</span>
+                  {href === '/favoritos' && (
+                    <span className="text-[10px] tabular-nums" aria-label={`${favoriteCount} favoritos`}>
+                      {favoriteCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}

@@ -1,6 +1,6 @@
 import { UserAnswerRecord, StatsPeriod } from '@/app/types';
 
-const STORAGE_KEY = 'enem_answers_v1';
+export const STORAGE_KEY = 'enem_answers_v1';
 
 export function loadAnswers(): UserAnswerRecord[] {
   if (typeof window === 'undefined') return [];
@@ -12,14 +12,19 @@ export function loadAnswers(): UserAnswerRecord[] {
   }
 }
 
-export function saveAnswer(record: UserAnswerRecord): void {
-  if (typeof window === 'undefined') return;
+export function saveAnswer(record: UserAnswerRecord): { ok: boolean; error?: 'quota' | 'unknown' | 'ssr' } {
+  if (typeof window === 'undefined') return { ok: false, error: 'ssr' };
   try {
     const existing = loadAnswers();
     existing.push(record);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+    return { ok: true };
   } catch (e) {
     console.error('Erro ao salvar resposta no localStorage:', e);
+    if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+      return { ok: false, error: 'quota' };
+    }
+    return { ok: false, error: 'unknown' };
   }
 }
 
@@ -30,13 +35,8 @@ export function clearAnswers(): void {
 
 export function filterAnswersByPeriod(
   answers: UserAnswerRecord[],
-  period: StatsPeriod,
-  currentSessionId: string | null
+  period: StatsPeriod
 ): UserAnswerRecord[] {
-  if (period === 'session') {
-    return answers.filter((a) => a.sessionId === currentSessionId);
-  }
-
   const now = new Date();
   const cutoffDate = new Date();
 

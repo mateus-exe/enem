@@ -1,4 +1,11 @@
 const FAVORITES_KEY = 'enem_favorites_v1';
+const FAVORITES_EVENT = 'enem-favorites-updated';
+
+function notifyFavoritesChanged() {
+  window.dispatchEvent(new Event(FAVORITES_EVENT));
+}
+
+export const favoritesChangedEvent = FAVORITES_EVENT;
 
 export interface FavoriteQuestion {
   questionKey: string; // formato: "year-index"
@@ -36,6 +43,7 @@ export function toggleFavorite(
     if (idx >= 0) {
       existing.splice(idx, 1);
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(existing));
+      notifyFavoritesChanged();
       return false; // removeu
     }
 
@@ -47,6 +55,7 @@ export function toggleFavorite(
       addedAt: new Date().toISOString(),
     });
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(existing));
+    notifyFavoritesChanged();
     return true; // adicionou
   } catch (e) {
     console.error('Erro ao salvar favorito:', e);
@@ -57,4 +66,5 @@ export function toggleFavorite(
 export function clearFavorites(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(FAVORITES_KEY);
+  notifyFavoritesChanged();
 }

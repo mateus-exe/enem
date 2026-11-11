@@ -1,19 +1,44 @@
 'use client';
+import { useEffect, useRef } from 'react';
 import { useStudySession } from '@/app/hooks/useStudySession';
 import PracticeMenu from '@/app/components/PracticeMenu';
 import QuestionView from '@/app/components/QuestionView';
 import { DayFilter, DisciplineFilter, LanguageFilter } from '@/app/types';
+import SessionSummary from '@/app/components/SessionSummary';
 
 export default function PraticarPage() {
   const {
     session,
+    summary,
     loading,
+    loadingMessage,
     error,
     startSession,
+    startFavoritesSession,
     submitAnswer,
     nextQuestion,
     endSession,
+    dismissSummary,
   } = useStudySession();
+
+  const startedFavoritesRef = useRef(false);
+  useEffect(() => {
+    if (startedFavoritesRef.current || typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('favorites') !== '1') return;
+    startedFavoritesRef.current = true;
+    void startFavoritesSession();
+  }, [startFavoritesSession]);
+
+  if (summary) {
+    return (
+      <SessionSummary
+        records={summary.records}
+        examYear={summary.examYear}
+        disciplineFilter={summary.disciplineFilter}
+        onNewSession={dismissSummary}
+      />
+    );
+  }
 
   if (!session) {
     return (
@@ -22,6 +47,7 @@ export default function PraticarPage() {
           startSession(year, day, discipline, language)
         }
         loading={loading}
+        loadingMessage={loadingMessage}
         error={error}
       />
     );
@@ -40,6 +66,7 @@ export default function PraticarPage() {
       onNext={nextQuestion}
       onEnd={endSession}
       isLast={isLast}
+      sessionError={error}
     />
   );
 }

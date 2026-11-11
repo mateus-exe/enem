@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 export function useTimer() {
   const [elapsed, setElapsed] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startTimeRef = useRef(Date.now());
+  const startTimeRef = useRef(0);
 
   const reset = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);

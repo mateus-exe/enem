@@ -42,7 +42,6 @@ export interface UserAnswerRecord {
 }
 
 export type StatsPeriod =
-  | 'session'
   | 'day'
   | 'week'
   | 'month'

@@ -19,6 +19,7 @@ interface Props {
     language: LanguageFilter
   ) => void;
   loading: boolean;
+  loadingMessage: string;
   error: string | null;
 }
 
@@ -53,8 +54,10 @@ function includesLinguagens(day: DayFilter, discipline: DisciplineFilter): boole
   return false;
 }
 
-export default function PracticeMenu({ onStart, loading, error }: Props) {
+export default function PracticeMenu({ onStart, loading, loadingMessage, error }: Props) {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [loadingYears, setLoadingYears] = useState(true);
+  const [yearsError, setYearsError] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | 'random'>('random');
   const [dayFilter, setDayFilter] = useState<DayFilter>('all');
   const [disciplineFilter, setDisciplineFilter] = useState<DisciplineFilter>('all');
@@ -68,7 +71,8 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
         const years = exams.map((e) => e.year).sort((a, b) => b - a);
         setAvailableYears(years);
       })
-      .catch(console.error);
+      .catch(() => setYearsError('Não foi possível carregar os anos disponíveis.'))
+      .finally(() => setLoadingYears(false));
   }, []);
 
   return (
@@ -93,14 +97,19 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
                 e.target.value === 'random' ? 'random' : Number(e.target.value)
               )
             }
-            className="w-full appearance-none bg-bg-primary border border-border-soft rounded-lg px-4 py-3 text-sm text-text-main pr-10 focus:outline-none focus:ring-2 focus:ring-action-main focus:border-transparent cursor-pointer"
+            disabled={loadingYears}
+            className="w-full appearance-none bg-bg-primary border border-border-soft rounded-lg px-4 py-3 text-sm text-text-main pr-10 focus:outline-none focus:ring-2 focus:ring-action-main focus:border-transparent cursor-pointer disabled:opacity-60"
           >
-            <option value="random">Aleatório</option>
-            {availableYears.map((y) => (
-              <option key={y} value={y}>
-                ENEM {y}
-              </option>
-            ))}
+            {loadingYears ? (
+              <option value="random">Carregando anos...</option>
+            ) : (
+              <>
+                <option value="random">Aleatório</option>
+                {availableYears.map((y) => (
+                  <option key={y} value={y}>ENEM {y}</option>
+                ))}
+              </>
+            )}
           </select>
           <ChevronDown
             size={16}
@@ -108,6 +117,7 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
             className="absolute right-3 top-1/2 -translate-y-1/2 text-text-meta pointer-events-none"
           />
         </div>
+        {yearsError && <p role="alert" className="text-xs text-wrong-text mt-1">{yearsError}</p>}
       </div>
 
       {/* Seletor de Dia */}
@@ -209,7 +219,7 @@ export default function PracticeMenu({ onStart, loading, error }: Props) {
         disabled={loading}
         className="w-full bg-action-main text-action-contrast py-3.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? 'Carregando questões...' : 'Iniciar Sessão'}
+        {loading ? loadingMessage || 'Carregando questões...' : 'Iniciar Sessão'}
       </button>
     </div>
   );
