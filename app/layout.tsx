@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import Script from 'next/script';
 import './globals.css';
 import Header from '@/app/components/Header';
 import { AuthProvider } from '@/app/lib/authContext';
@@ -25,8 +24,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
-      <Script id="theme-init" strategy="beforeInteractive">{themeScript}</Script>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={`${inter.className} bg-bg-secondary min-h-screen`}>
         <AuthProvider>
           <Header />
