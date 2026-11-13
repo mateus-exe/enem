@@ -59,7 +59,7 @@
 - [x] Dashboard de Pontos Fracos, Heatmap de estudo e Proficiência na página `/estatisticas`
 - [x] Revisão Espaçada (SM-2 simplificado) em `/revisao`, com banner na página Praticar
   - Fila local (funciona sem login) + sincronização com `review_queue` quando logado
-- [x] Gabarito Comentado com IA (Gemini 2.5 Flash) com cache compartilhado
+- [x] Gabarito Comentado com IA (Gemini 3.8 Flash) com cache compartilhado
   - Exige login para proteger a cota da chave
 
 ---

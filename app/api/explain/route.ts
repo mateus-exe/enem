@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { fetchAllQuestionsForYear } from '@/app/services/enemApiService';
 import type { Question } from '@/app/types';
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.8-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const MAX_CONTEXT_CHARS = 6000;
 
