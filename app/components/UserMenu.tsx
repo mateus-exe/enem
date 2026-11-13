@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { LogOut, User, ChevronDown, Upload, AlertTriangle } from 'lucide-react';
+import { LogOut, ChevronDown, Upload, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/app/lib/authContext';
 import { loadAnswers } from '@/app/services/storageService';
 import { loadFavorites } from '@/app/services/favoritesService';

@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { X, Mail, Eye, EyeOff, Chrome } from 'lucide-react';
+import { X, Mail, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/app/lib/authContext';
 
 type Mode = 'login' | 'signup';
