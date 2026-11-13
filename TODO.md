@@ -44,20 +44,23 @@
 
 ---
 
-## 🟡 FASE 2 — Aprendizado Inteligente (próxima)
+## 🟡 FASE 2 — Aprendizado Inteligente (código implementado, falta ativar)
 
-- [ ] Criar taxonomia de tópicos (`app/data/topicTaxonomy.ts`)
-  - Mapeamento de cada questão para seu tópico/subtópico
-  - Começar pelos últimos 5 anos
-- [ ] Implementar Dashboard de Pontos Fracos por tópico na página `/estatisticas`
-- [ ] Implementar Sistema de Revisão Espaçada (SRS)
-  - Tabela `review_queue` no Supabase
-  - Algoritmo SM-2
-  - Rota `/revisao`
-- [ ] Implementar Gabarito Comentado com IA (Gemini)
-  - Route Handler: `app/api/explain/route.ts`
-  - Componente: `app/components/QuestionExplanation.tsx`
-  - Cache de explicações na tabela `question_explanations`
+### Você precisa fazer
+- [ ] Executar `supabase_migration_fase2.sql` no SQL Editor do Supabase
+  - Adiciona a coluna `topic` em `user_answers` e cria `review_queue` e `question_explanations`
+  - **Sem isso, salvar respostas logado vai falhar** (a coluna `topic` não existe)
+- [ ] Reiniciar o `npm run dev` (a rota `/api/explain` lê `GEMINI_API_KEY` do `.env.local`)
+- [ ] Testar: responder questões → ver tópicos em `/estatisticas` → ver fila em `/revisao` → clicar "Entender esta questão" (exige login)
+
+### Implementado
+- [x] Taxonomia de tópicos por palavras-chave (`app/data/topicTaxonomy.ts`, `app/lib/topicUtils.ts`)
+  - Classifica no momento da resposta; respostas antigas ficam sem tópico
+- [x] Dashboard de Pontos Fracos, Heatmap de estudo e Proficiência na página `/estatisticas`
+- [x] Revisão Espaçada (SM-2 simplificado) em `/revisao`, com banner na página Praticar
+  - Fila local (funciona sem login) + sincronização com `review_queue` quando logado
+- [x] Gabarito Comentado com IA (Gemini 2.5 Flash) com cache compartilhado
+  - Exige login para proteger a cota da chave
 
 ---
 

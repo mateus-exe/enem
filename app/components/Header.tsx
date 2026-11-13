@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, BarChart2, Moon, Sun, Star, LogIn } from 'lucide-react';
+import { BookOpen, BarChart2, Moon, Sun, Star, LogIn, RotateCcw } from 'lucide-react';
 import { favoritesChangedEvent, loadFavorites } from '@/app/services/favoritesService';
 import { useAuth } from '@/app/lib/authContext';
 import AuthModal from '@/app/components/AuthModal';
@@ -10,6 +10,7 @@ import UserMenu from '@/app/components/UserMenu';
 
 const tabs = [
   { href: '/praticar', label: 'Praticar', icon: BookOpen },
+  { href: '/revisao', label: 'Revisão', icon: RotateCcw },
   { href: '/favoritos', label: 'Favoritos', icon: Star },
   { href: '/estatisticas', label: 'Estatísticas', icon: BarChart2 },
 ];

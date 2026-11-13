@@ -6,6 +6,7 @@ import { Clock, ChevronRight, XCircle, ZoomIn, X, Star } from 'lucide-react';
 import AlternativeButton from './AlternativeButton';
 import ProgressBar from './ProgressBar';
 import ConfirmDialog from './ConfirmDialog';
+import QuestionExplanation from './QuestionExplanation';
 import { Question, UserAnswerRecord } from '@/app/types';
 import { disciplineLabel } from '@/app/services/enemApiService';
 import { useTimer } from '@/app/hooks/useTimer';
@@ -270,6 +271,10 @@ export default function QuestionView({
             ? `Correto. A resposta certa era a alternativa ${correctAlt?.letter}.`
             : `Incorreto. Você marcou ${result.selectedLetter}. A resposta correta era ${result.correctLetter}.`}
         </div>
+      )}
+
+      {confirmed && (
+        <QuestionExplanation key={questionKey} year={question.year} index={question.index} />
       )}
 
       {/* Ações */}

@@ -34,6 +34,7 @@ export interface UserAnswerRecord {
   examYear: number;
   examDay: 1 | 2;
   discipline: string;
+  topic?: string | null;
   selectedLetter: 'A' | 'B' | 'C' | 'D' | 'E';
   correctLetter: 'A' | 'B' | 'C' | 'D' | 'E';
   isCorrect: boolean;

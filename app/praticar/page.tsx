@@ -5,6 +5,7 @@ import PracticeMenu from '@/app/components/PracticeMenu';
 import QuestionView from '@/app/components/QuestionView';
 import { DayFilter, DisciplineFilter, LanguageFilter } from '@/app/types';
 import SessionSummary from '@/app/components/SessionSummary';
+import DailyReviewBanner from '@/app/components/DailyReviewBanner';
 
 export default function PraticarPage() {
   const {
@@ -42,14 +43,17 @@ export default function PraticarPage() {
 
   if (!session) {
     return (
-      <PracticeMenu
-        onStart={(year: number | 'random', day: DayFilter, discipline: DisciplineFilter, language: LanguageFilter) =>
-          startSession(year, day, discipline, language)
-        }
-        loading={loading}
-        loadingMessage={loadingMessage}
-        error={error}
-      />
+      <>
+        <DailyReviewBanner />
+        <PracticeMenu
+          onStart={(year: number | 'random', day: DayFilter, discipline: DisciplineFilter, language: LanguageFilter) =>
+            startSession(year, day, discipline, language)
+          }
+          loading={loading}
+          loadingMessage={loadingMessage}
+          error={error}
+        />
+      </>
     );
   }
 

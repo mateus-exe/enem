@@ -13,6 +13,7 @@ type DbAnswerRow = {
   exam_year: number;
   exam_day: number;
   discipline: string;
+  topic: string | null;
   selected_letter: string;
   correct_letter: string;
   is_correct: boolean;
@@ -28,6 +29,7 @@ function toRecord(row: DbAnswerRow): UserAnswerRecord {
     examYear: row.exam_year,
     examDay: row.exam_day as 1 | 2,
     discipline: row.discipline,
+    topic: row.topic,
     selectedLetter: row.selected_letter as UserAnswerRecord['selectedLetter'],
     correctLetter: row.correct_letter as UserAnswerRecord['correctLetter'],
     isCorrect: row.is_correct,
@@ -45,6 +47,7 @@ function toDbRow(record: UserAnswerRecord, userId: string): Omit<DbAnswerRow, 'u
     exam_year: record.examYear,
     exam_day: record.examDay,
     discipline: record.discipline,
+    topic: record.topic ?? null,
     selected_letter: record.selectedLetter,
     correct_letter: record.correctLetter,
     is_correct: record.isCorrect,

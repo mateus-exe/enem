@@ -17,7 +17,16 @@ import {
 import { saveAnswer } from '@/app/services/storageService';
 import { saveRemoteAnswer } from '@/app/services/remoteStorageService';
 import { loadFavorites } from '@/app/services/favoritesService';
+import {
+  getDueItems,
+  recordReviewResult,
+  pushRemoteReviewItem,
+  syncRemoteReviewQueue,
+} from '@/app/services/reviewQueueService';
+import { classifyQuestion } from '@/app/lib/topicUtils';
 import { supabase } from '@/app/lib/supabase';
+
+const MAX_REVIEW_SESSION_SIZE = 30;
 
 export function useStudySession() {
   const [session, setSession] = useState<StudySession | null>(null);
@@ -119,6 +128,62 @@ export function useStudySession() {
     }
   }, []);
 
+  const startReviewSession = useCallback(async () => {
+    sessionRecordsRef.current = [];
+    setSummary(null);
+    setLoading(true);
+    setLoadingMessage('Preparando sua revisão...');
+    setError(null);
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        await syncRemoteReviewQueue(data.session.user.id);
+      }
+
+      const due = getDueItems().slice(0, MAX_REVIEW_SESSION_SIZE);
+      if (due.length === 0) {
+        setError('Nenhuma questão para revisar hoje. Volte amanhã!');
+        return;
+      }
+
+      const years = [...new Set(due.map((item) => item.year))];
+      const results = await Promise.allSettled(years.map(fetchAllQuestionsForYear));
+      const byKey = new Map<string, Question>();
+      for (const result of results) {
+        if (result.status !== 'fulfilled') continue;
+        for (const question of result.value) {
+          byKey.set(`${question.year}-${question.index}`, question);
+        }
+      }
+
+      const questions = due
+        .map((item) => byKey.get(item.questionKey))
+        .filter((question): question is Question => question !== undefined);
+
+      if (questions.length === 0) {
+        setError('Não foi possível carregar as questões da revisão. Tente novamente.');
+        return;
+      }
+
+      setSession({
+        sessionId: crypto.randomUUID(),
+        examYear: 'random',
+        dayFilter: 'all',
+        disciplineFilter: 'all',
+        languageFilter: 'ingles',
+        questions,
+        currentIndex: 0,
+        startedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error(e);
+      setError('Erro ao carregar a revisão. Verifique sua conexão e tente novamente.');
+    } finally {
+      setLoading(false);
+      setLoadingMessage('');
+    }
+  }, []);
+
   const submitAnswer = useCallback(
     (
       question: Question,
@@ -129,6 +194,8 @@ export function useStudySession() {
       const correctAlt = question.alternatives.find((a) => a.isCorrect);
       const correctLetter = correctAlt?.letter ?? 'A';
       const isCorrect = selectedLetter === correctLetter;
+
+      const topic = classifyQuestion(question);
 
       const record: UserAnswerRecord = {
         id: crypto.randomUUID(),
@@ -141,6 +208,7 @@ export function useStudySession() {
             ? 1
             : 2,
         discipline: question.discipline,
+        topic,
         selectedLetter,
         correctLetter,
         isCorrect,
@@ -156,10 +224,23 @@ export function useStudySession() {
         setError('Armazenamento cheio. Exporte seus dados e limpe o histórico nas Estatísticas.');
       }
 
+      // Atualiza a fila de revisão espaçada (local, sempre)
+      const reviewItem = recordReviewResult(
+        {
+          questionKey: record.questionKey,
+          year: question.year,
+          index: question.index,
+          discipline: question.discipline,
+          topic,
+        },
+        isCorrect
+      );
+
       // Salva remotamente se houver usuário autenticado (fire-and-forget)
       supabase.auth.getUser().then(({ data }) => {
         if (data.user) {
           saveRemoteAnswer(record, data.user.id).catch(console.error);
+          pushRemoteReviewItem(reviewItem, data.user.id).catch(console.error);
         }
       });
 
@@ -197,6 +278,7 @@ export function useStudySession() {
     error,
     startSession,
     startFavoritesSession,
+    startReviewSession,
     submitAnswer,
     nextQuestion,
     endSession,

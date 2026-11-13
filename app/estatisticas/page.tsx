@@ -8,6 +8,9 @@ import {
 import { UserAnswerRecord, StatsPeriod, DisciplineFilter } from '@/app/types';
 import MetricCard from '@/app/components/MetricCard';
 import DataManager from '@/app/components/DataManager';
+import WeaknessTable from '@/app/components/WeaknessTable';
+import StudyHeatmap from '@/app/components/StudyHeatmap';
+import ProficiencyGauge from '@/app/components/ProficiencyGauge';
 import { disciplineLabel } from '@/app/services/enemApiService';
 import {
   BarChart,
@@ -159,6 +162,15 @@ export default function EstatisticasPage() {
           sub="por questão"
         />
       </div>
+
+      {/* Constância de estudo (considera todo o histórico, independente do filtro) */}
+      <StudyHeatmap answers={answers} />
+
+      {/* Nível de proficiência por área */}
+      {filtered.length > 0 && <ProficiencyGauge byDiscipline={stats.byDiscipline} />}
+
+      {/* Pontos fracos por tópico */}
+      {filtered.length > 0 && <WeaknessTable answers={filtered} />}
 
       {/* Gráfico: Desempenho por Área */}
       {disciplineData.length > 0 && (
