@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Sparkles } from 'lucide-react';
 import { useAuth } from '@/app/lib/authContext';
+import { cleanLatexInMarkdown } from '@/app/lib/formatMarkdown';
 
 interface Props {
   year: number;
@@ -60,7 +61,7 @@ export default function QuestionExplanation({ year, index }: Props) {
             strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
           }}
         >
-          {explanation}
+          {cleanLatexInMarkdown(explanation)}
         </ReactMarkdown>
       </div>
     );

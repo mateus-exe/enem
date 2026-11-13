@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { fetchAllQuestionsForYear } from '@/app/services/enemApiService';
+import { cleanLatexInMarkdown } from '@/app/lib/formatMarkdown';
 import type { Question } from '@/app/types';
 
 const GEMINI_MODELS = [
@@ -36,6 +37,10 @@ Estrutura obrigatória:
 (uma dica prática e curta)
 
 Se a questão depender de imagem que não foi fornecida, deixe isso claro e explique com base no que o enunciado e a resposta oficial permitem concluir.
+
+IMPORTANTE — Formatação de fórmulas:
+- NUNCA use LaTeX ($...$, $$...$$, \\text{}, \\frac{}, \\ce{}).
+- Escreva fórmulas químicas e matemáticas usando caracteres Unicode diretamente (exemplos: CH₃-C(CH₃)₂, H₂SO₄, CO₂, Fe³⁺, 10⁻³, x², √2, ΔH, →, ⇌, ×, ÷).
 
 QUESTÃO (ENEM ${question.year}, ${question.discipline}):
 ${(question.context ?? '').slice(0, MAX_CONTEXT_CHARS)}
@@ -150,7 +155,7 @@ export async function POST(request: NextRequest) {
         .join('');
 
       if (text) {
-        explanationText = text;
+        explanationText = cleanLatexInMarkdown(text);
         break;
       }
     } catch (e) {
