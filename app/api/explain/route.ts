@@ -4,8 +4,14 @@ import { createServerClient } from '@supabase/ssr';
 import { fetchAllQuestionsForYear } from '@/app/services/enemApiService';
 import type { Question } from '@/app/types';
 
-const GEMINI_MODEL = 'gemini-3.8-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-3.8-flash',
+];
+const MODEL_TIMEOUT_MS = 15_000;
 const MAX_CONTEXT_CHARS = 6000;
 
 function buildPrompt(question: Question): string {
@@ -112,43 +118,59 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Questão não encontrada.' }, { status: 404 });
   }
 
-  // 3. Geração com Gemini
-  try {
-    const res = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: buildPrompt(question) }] }],
-        generationConfig: { temperature: 0.4 },
-      }),
-    });
+  // 3. Geração com Gemini (tenta a lista de modelos em ordem se houver sobrecarga 503/429)
+  const prompt = buildPrompt(question);
+  let explanationText: string | undefined;
 
-    if (!res.ok) {
-      console.error('[api/explain] Gemini respondeu', res.status, await res.text());
-      return NextResponse.json(
-        { error: 'A IA não conseguiu responder agora. Tente novamente em instantes.' },
-        { status: 502 }
-      );
+  for (const model of GEMINI_MODELS) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
+
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.4 },
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        console.warn(`[api/explain] Modelo ${model} respondeu ${res.status}. Tentando próximo...`);
+        continue;
+      }
+
+      const json = await res.json();
+      const text: string | undefined = json?.candidates?.[0]?.content?.parts
+        ?.map((part: { text?: string }) => part.text ?? '')
+        .join('');
+
+      if (text) {
+        explanationText = text;
+        break;
+      }
+    } catch (e) {
+      clearTimeout(timeoutId);
+      console.warn(`[api/explain] Falha/timeout no modelo ${model}:`, e);
     }
-
-    const json = await res.json();
-    const text: string | undefined = json?.candidates?.[0]?.content?.parts
-      ?.map((part: { text?: string }) => part.text ?? '')
-      .join('');
-
-    if (!text) {
-      return NextResponse.json({ error: 'A IA retornou uma resposta vazia.' }, { status: 502 });
-    }
-
-    // 4. Salva no cache (falha de cache não impede a resposta)
-    const { error: cacheError } = await supabase
-      .from('question_explanations')
-      .insert({ question_key: questionKey, explanation_md: text });
-    if (cacheError) console.error('[api/explain] Erro ao salvar cache:', cacheError.message);
-
-    return NextResponse.json({ explanation: text, cached: false });
-  } catch (e) {
-    console.error('[api/explain] Erro ao chamar Gemini:', e);
-    return NextResponse.json({ error: 'Erro ao gerar explicação.' }, { status: 500 });
   }
+
+  if (!explanationText) {
+    return NextResponse.json(
+      { error: 'A IA está com alta demanda no momento. Tente novamente em instantes.' },
+      { status: 502 }
+    );
+  }
+
+  // 4. Salva no cache (falha de cache não impede a resposta)
+  const { error: cacheError } = await supabase
+    .from('question_explanations')
+    .insert({ question_key: questionKey, explanation_md: explanationText });
+  if (cacheError) console.error('[api/explain] Erro ao salvar cache:', cacheError.message);
+
+  return NextResponse.json({ explanation: explanationText, cached: false });
 }
